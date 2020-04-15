@@ -21,14 +21,18 @@ class CharacterBase(metaclass=abc.ABCMeta):
     def Atk(self):
         return self._Atk
 
+    @property
+    def Move(self):
+        return self._Move
+
     @abc.abstractproperty
     def Name(self):
         raise NotImplementedError
 
 
 class PlayerCharacter(CharacterBase, ISerializable):
-    def __init__(self, id: int):
-        super(CharacterBase, self).__init__()
+    def __init__(self,  *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     @property
     def Name(self):
@@ -46,9 +50,31 @@ class PlayerCharacter(CharacterBase, ISerializable):
 
 
 class NonPlayerCharacter(CharacterBase, ISerializable):
+    def __init__(self, name: str, morale: int, skillmod: int, savetarget: int,  *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.Name = name
+        self.ML = morale
+        if skillmod < 0:
+            self.Skills = DiceRoll(f"1d20 {skillmod}")
+        else:
+            self.Skills = DiceRoll(f"1d20 + {skillmod}")
+        self.Saves = savetarget
+
     @property
     def Name(self):
         return self._Name
+
+    @property
+    def ML(self):
+        return self._ML
+
+    @property
+    def Skills(self):
+        return self._Skills
+
+    @property
+    def Saves(self):
+        return self._Saves
 
     @classmethod
     def deserialize(cls, string_representation: str):
@@ -59,5 +85,3 @@ class NonPlayerCharacter(CharacterBase, ISerializable):
     def serialize(self) -> str:
         """Serialize an instance of the class as a string"""
         pass
-
-    pass

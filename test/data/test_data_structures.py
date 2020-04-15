@@ -2,6 +2,8 @@
 import pytest
 from swn_database.data.DataStructures import Coordinate, DiceRoll
 
+DICEROLL_STRING = "1d20 + 2"
+
 
 @pytest.fixture
 def coordinate():
@@ -26,7 +28,7 @@ def test_Coordinate_From_Hex_ThrowsValueError_WhenGivenInvalidHexString():
 
 @pytest.fixture
 def diceroll():
-    return DiceRoll("1d6")
+    return DiceRoll(DICEROLL_STRING)
 
 
 def test_DiceRoll_DefaultConstructor_WorksAsExpected():
@@ -40,7 +42,6 @@ def test_DiceRoll_Roll_ReturnsExpectedValue():
 
 def test_DiceRoll_set_roll_string_ShouldCalculateOffset(diceroll: DiceRoll):
     expected_offset = 20
-    assert 0 == diceroll._offset
     diceroll.roll_string = f"1d6 + {20}"
     assert expected_offset == diceroll._offset
     diceroll.roll_string = f"1d6 - {20}"
@@ -50,3 +51,7 @@ def test_DiceRoll_set_roll_string_ShouldCalculateOffset(diceroll: DiceRoll):
 def test_DiceRoll_set_roll_string_ThrowsValueErrorWhenNotGivenValidString(diceroll: DiceRoll):
     with pytest.raises(ValueError) as e_info:
         diceroll.roll_string = "+2"
+
+
+def test_DiceRoll_str_ReturnsRollStringAsRepresentation(diceroll: DiceRoll):
+    assert f"{diceroll}" == DICEROLL_STRING

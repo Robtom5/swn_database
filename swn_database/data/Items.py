@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 import sqlite3
 from .ISerializable import ISerializable
+from .DataStructures import DiceRoll
 import abc
 
 class ItemBase(metaclass=abc.ABCMeta):
@@ -15,4 +16,9 @@ class Weapon(ItemBase, ISerializable):
     @property
     def Range(self):
         return self._Range
+
+    @property
+    def Damage(self):
+        return self._Damage
+    
     

@@ -66,7 +66,7 @@ class DiceRoll(object):
     def roll_string(self, newRollString: str):
         if not DiceRoll._diceroll_pattern.match(newRollString):
             raise ValueError("Invalid roll string")
-        self._roll_String = newRollString.replace(" ", "")
+        self._roll_String = newRollString
         self._Calculate_Offset()
 
     def Roll(self):
@@ -84,8 +84,12 @@ class DiceRoll(object):
 
     def _Calculate_Offset(self):
         offset = 0
-        cleaned_string = DiceRoll._diceroll_pattern.sub(' ', self.roll_string)
+        cleaned_string = DiceRoll._diceroll_pattern.sub(
+            ' ', self.roll_string).replace(" ", "")
         for constant in DiceRoll._constant_pattern.finditer(cleaned_string):
             value = int(constant.group('value'))
             offset = DiceRoll._operators[constant.group('op')](offset, value)
         self._offset = offset
+
+    def __str__(self):
+        return self.roll_string
