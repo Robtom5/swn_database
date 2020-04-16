@@ -41,12 +41,11 @@ class PlayerCharacter(CharacterBase, ISerializable):
     @classmethod
     def deserialize(cls, string_representation: str):
         """Deserialize the class from a string"""
-
-        pass
+        raise NotImplementedError()
 
     def serialize(self) -> str:
         """Serialize an instance of the class as a string"""
-        pass
+        raise NotImplementedError()
 
 
 class NonPlayerCharacter(CharacterBase, ISerializable):
@@ -79,9 +78,8 @@ class NonPlayerCharacter(CharacterBase, ISerializable):
     @classmethod
     def deserialize(cls, string_representation: str):
         """Deserialize the class from a string"""
-
-        pass
+        raise NotImplementedError()
 
     def serialize(self) -> str:
         """Serialize an instance of the class as a string"""
-        pass
+        raise NotImplementedError()
