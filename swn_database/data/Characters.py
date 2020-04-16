@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 import sqlite3
 from .ISerializable import ISerializable
+from .DataStructures import DiceRoll
 import abc
 
 
@@ -49,15 +50,15 @@ class PlayerCharacter(CharacterBase, ISerializable):
 
 
 class NonPlayerCharacter(CharacterBase, ISerializable):
-    def __init__(self, name: str, morale: int, skillmod: int, savetarget: int,  *args, **kwargs):
+    def __init__(self, name: str, morale: int = 6, skillmod: int = 0, savetarget: int = 15,  *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.Name = name
-        self.ML = morale
+        self._Name = name
+        self._ML = morale
         if skillmod < 0:
-            self.Skills = DiceRoll(f"1d20 {skillmod}")
+            self._Skills = DiceRoll(f"1d20 {skillmod}")
         else:
-            self.Skills = DiceRoll(f"1d20 + {skillmod}")
-        self.Saves = savetarget
+            self._Skills = DiceRoll(f"1d20 + {skillmod}")
+        self._Saves = savetarget
 
     @property
     def Name(self):

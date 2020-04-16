@@ -6,4 +6,4 @@ def test_PlayerCharacter_Constructor_DoesNotThrow():
     pc = PlayerCharacter(2)
 
 def test_NonPlayerCharacter_Constructor_DoesNotThrow():
-    npc = NonPlayerCharacter(1)
+    npc = NonPlayerCharacter(id = 1, name = "test")
