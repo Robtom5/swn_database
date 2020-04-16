@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 from swn_database.data import Item
+from swn_database import SQLDatabaseLink
 
 
 def print_item(item: Item):
@@ -9,16 +10,49 @@ def print_item(item: Item):
 
 
 def populate_store_items(itemlist: list):
-    itemlist.append(Item(ID=1, name="Box", cost="5", enc=1, tl=1, packable=False))
-    itemlist.append(Item(ID=2, name="Roll of Tape", cost="5", enc=1, tl=2, packable=True))
-    itemlist.append(Item(ID=2, name="Chewing Gum", cost="5", enc=0, tl=2, packable=False))
-
+    itemlist.append(Item(ID=1, name="Box", cost="5",
+                         enc=1, tl=1, packable=False))
+    itemlist.append(Item(ID=2, name="Roll of Tape",
+                         cost="15", enc=1, tl=2, packable=True))
+    itemlist.append(Item(ID=2, name="Chewing Gum",
+                         cost="1", enc=0, tl=2, packable=False))
 
 
 if __name__ == "__main__":
-    StoreItems = []
+    link = SQLDatabaseLink("./store.sqlite")
+    link.connect()
+    try:
+        link.execute_query("""
+            CREATE TABLE IF NOT EXISTS items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            cost INTEGER NOT NULL,
+            enc INTEGER NOT NULL,
+            tl INTEGER NOT NULL,
+            packable BIT NOT NULL
+            );
+            """)
 
-    populate_store_items(StoreItems)
-    print(f"{'Item':<15}\t{'Cost':>6}\t{'Enc':>5}\t{'Packable':<8}")
-    for item in StoreItems:
-        print_item(item)
+        link.execute_query("""
+            INSERT INTO
+                items (id, name, cost, enc, tl, packable)
+            VALUES
+                (1, 'Box', 5, 1, 1, 0),
+                (2, 'Roll of Tape', 15, 1, 2, 1),
+                (3, 'Chewing Gum', 1, 0, 2, 0)
+            """)
+
+        StoreItems = []
+        items = link.execute_read_query("SELECT * from items")
+        for item in items:
+            StoreItems.append(Item.deserialize(item))
+
+        #link.execute_query("DROP TABLE items")
+
+
+       # populate_store_items(StoreItems)
+        print(f"{'Item':<15}\t{'Cost':>6}\t{'Enc':>5}\t{'Packable':<8}")
+        for item in StoreItems:
+            print_item(item)
+    finally:
+        link.close()

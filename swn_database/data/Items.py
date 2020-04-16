@@ -43,19 +43,19 @@ class Item(ISerializable):
         return self._Packable
 
     @classmethod
-    def deserialize(cls, string_representation: str):
-        """Deserialize the class from a string"""
-        ID = int(string_representation[0:10])
-        packable = bool(string_representation[10])
-        cost = int(string_representation[11:17])
-        enc = int(string_representation[17])
-        tl = int(string_representation[18])
-        name = string_representation[19:]
+    def deserialize(cls, query_result: str):
+        """Deserialize the class from a sql query result"""
+        ID = int(query_result[0])
+        name = query_result[1]
+        cost =  int(query_result[2])
+        enc =  int(query_result[3])
+        tl =  int(query_result[4])
+        packable = bool(query_result[5])
         return Item(ID=ID, name=name, cost=cost, enc=enc, tl=tl, packable=packable)
 
     def serialize(self) -> str:
         """Serialize an instance of the class as a string"""
-        return f"{self.ID:0>10}{int(self.Packable):1}{self.Cost:0>6}{self.Encumbrance}{self.TL}{self.Name}"
+        return (self.ID, self.Name, self.Cost, self.Encumbrance, self.TL, int(self.Packable))
 
     def __eq__(self, other):
         if isinstance(other, Item):
