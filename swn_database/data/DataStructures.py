@@ -51,45 +51,54 @@ class Coordinate(object):
 
 class DiceRoll(object):
     _diceroll_pattern = re.compile(r'(?P<count>[0-9]*)d(?P<sides>[0-9]+)')
-    _constant_pattern = re.compile(r'(?P<op>[+-]+)(?P<value>[0-9]+)')
+    _constant_pattern = re.compile(r'(?P<op>[+-]?)(?P<value>[0-9]+)')
     _operators = {"+": operator.add, "-": operator.sub}
 
     def __init__(self, rollString: str ="1d6", *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.roll_string = rollString
+        self.RollString = rollString
 
     @property
-    def roll_string(self):
-        return self._roll_String
+    def RollString(self):
+        return self._RollString
 
-    @roll_string.setter
-    def roll_string(self, newRollString: str):
+    @property
+    def Mod(self):
+        return self._Mod
+
+    @RollString.setter
+    def RollString(self, newRollString: str):
         if not DiceRoll._diceroll_pattern.match(newRollString):
             raise ValueError("Invalid roll string")
-        self._roll_String = newRollString
-        self._Calculate_Offset()
+        self._RollString = newRollString
+        self._Calculate_Modifier()
 
     def Roll(self):
-        total = self._offset
-        for rollspec in re.finditer(DiceRoll._diceroll_pattern, self.roll_string):
+        total = self._Mod
+        for rollspec in re.finditer(DiceRoll._diceroll_pattern, self.RollString):
             count = int(rollspec.group('count') or '1')
             sides = int(rollspec.group('sides'))
             total = total + sum([DiceRoll._Roll_Die(sides)
                                  for i in range(count)])
-
         return total
 
     def _Roll_Die(sides):
         return random.randint(1, sides)
 
-    def _Calculate_Offset(self):
-        offset = 0
+    def _Calculate_Modifier(self):
+        modifier = 0
         cleaned_string = DiceRoll._diceroll_pattern.sub(
-            ' ', self.roll_string).replace(" ", "")
+            ' ', self.RollString).replace(" ", "")
         for constant in DiceRoll._constant_pattern.finditer(cleaned_string):
             value = int(constant.group('value'))
-            offset = DiceRoll._operators[constant.group('op')](offset, value)
-        self._offset = offset
+            modifier = DiceRoll._operators[constant.group('op')](
+                modifier, value)
+        self._Mod = modifier
 
     def __str__(self):
-        return self.roll_string
+        return self.RollString
+
+class AttackRoll(DiceRoll):
+    @classmethod
+    def FromModifier(cls, mod: int = 0):
+        return DiceRoll(f"1d20 + {mod}")

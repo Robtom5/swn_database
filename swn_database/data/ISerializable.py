@@ -3,9 +3,14 @@ import abc
 
 
 class ISerializable(metaclass=abc.ABCMeta):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, ID: int, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
+        self._ID = ID
+
+    @property
+    def ID(self):
+        return self._ID
+
     @abc.abstractmethod
     def deserialize(serializable_as_string: str):
         """Deserialize the class from a string"""

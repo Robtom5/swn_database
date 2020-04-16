@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 import pytest
-from swn_database.data.DataStructures import Coordinate, DiceRoll
+from swn_database.data.DataStructures import Coordinate, DiceRoll, AttackRoll
 
 DICEROLL_STRING = "1d20 + 2"
 
@@ -42,16 +42,21 @@ def test_DiceRoll_Roll_ReturnsExpectedValue():
 
 def test_DiceRoll_set_roll_string_ShouldCalculateOffset(diceroll: DiceRoll):
     expected_offset = 20
-    diceroll.roll_string = f"1d6 + {20}"
-    assert expected_offset == diceroll._offset
-    diceroll.roll_string = f"1d6 - {20}"
-    assert -expected_offset == diceroll._offset
+    diceroll.RollString = f"1d6 + {20}"
+    assert expected_offset == diceroll.Mod
+    diceroll.RollString = f"1d6 - {20}"
+    assert -expected_offset == diceroll.Mod
 
 
 def test_DiceRoll_set_roll_string_ThrowsValueErrorWhenNotGivenValidString(diceroll: DiceRoll):
     with pytest.raises(ValueError) as e_info:
-        diceroll.roll_string = "+2"
+        diceroll.RollString = "+2"
 
 
 def test_DiceRoll_str_ReturnsRollStringAsRepresentation(diceroll: DiceRoll):
     assert f"{diceroll}" == DICEROLL_STRING
+
+def test_AttackRoll_FromModifier_ReturnsCorrectResult():
+    ar = AttackRoll.FromModifier(5)
+    assert ar.Mod == 5
+    assert ar.RollString == "1d20 + 5"
