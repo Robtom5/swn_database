@@ -1,18 +1,16 @@
 #! /usr/bin/env python3
 import sqlite3
 from .ISerializable import ISerializable
-from .DataStructures import DiceRoll
+from .DataStructures import DiceRoll, AttackRoll
 import abc
 
 
-class CharacterBase(metaclass=abc.ABCMeta):
-    def __init__(self, id: int,  *args, **kwargs):
+class CharacterBase(ISerializable, metaclass=abc.ABCMeta):
+    def __init__(self, ac: int = 10, atk: int = 0, move: int = 10, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._ID = id
-
-    @property
-    def ID(self):
-        return self._ID
+        self._AC = ac
+        self._Atk = AttackRoll.FromModifier(atk)
+        self._Move = move
 
     @property
     def AC(self):
@@ -24,6 +22,7 @@ class CharacterBase(metaclass=abc.ABCMeta):
 
     @property
     def Move(self):
+        '''Returns the number of meters this character can move in one round'''
         return self._Move
 
     @abc.abstractproperty
@@ -31,7 +30,7 @@ class CharacterBase(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
-class PlayerCharacter(CharacterBase, ISerializable):
+class PlayerCharacter(CharacterBase):
     def __init__(self,  *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -49,15 +48,12 @@ class PlayerCharacter(CharacterBase, ISerializable):
         raise NotImplementedError()
 
 
-class NonPlayerCharacter(CharacterBase, ISerializable):
+class NonPlayerCharacter(CharacterBase):
     def __init__(self, name: str, morale: int = 6, skillmod: int = 0, savetarget: int = 15,  *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._Name = name
         self._ML = morale
-        if skillmod < 0:
-            self._Skills = DiceRoll(f"1d20 {skillmod}")
-        else:
-            self._Skills = DiceRoll(f"1d20 + {skillmod}")
+        self._Skills = DiceRoll(f"1d20 + {skillmod}")
         self._Saves = savetarget
 
     @property

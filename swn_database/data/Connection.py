@@ -4,8 +4,8 @@ from .ISerializable import ISerializable
 
 
 class Connection(ISerializable):
-    def __init__(self, ID: int, ID_Planet_1: int, ID_Planet_2: int):
-        self._ID = ID
+    def __init__(self, ID_Planet_1: int, ID_Planet_2: int, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.ID_Planet_1 = ID_Planet_1
         self.ID_Planet_2 = ID_Planet_2
 
@@ -19,7 +19,7 @@ class Connection(ISerializable):
 
     @classmethod
     def fromPlanets(cls, ID: int, planet_1, planet_2):
-        return Connection(ID, planet_1.ID, planet_2.ID)
+        return Connection(ID=ID, ID_Planet_1=planet_1.ID, ID_Planet_2=planet_2.ID)
 
     @property
     def ID(self):
@@ -34,4 +34,4 @@ class Connection(ISerializable):
 
     def serialize(self) -> str:
         """Serialize an instance of the class as a string"""
-        return (f"{self.ID};{self.ID_Planet_1};{self.ID_Planet_2}")
+        return f"{self.ID};{self.ID_Planet_1};{self.ID_Planet_2}"
