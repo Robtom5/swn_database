@@ -9,15 +9,6 @@ def print_item(item: Item):
     print(f"{item.Name:<15}\t{item.Cost:>6}\t{item.Encumbrance:>5}\t{tick if item.Packable else cross:^8}")
 
 
-def populate_store_items(itemlist: list):
-    itemlist.append(Item(ID=1, name="Box", cost="5",
-                         enc=1, tl=1, packable=False))
-    itemlist.append(Item(ID=2, name="Roll of Tape",
-                         cost="15", enc=1, tl=2, packable=True))
-    itemlist.append(Item(ID=2, name="Chewing Gum",
-                         cost="1", enc=0, tl=2, packable=False))
-
-
 if __name__ == "__main__":
     link = SQLDatabaseLink("./store.sqlite")
     link.connect()
@@ -39,7 +30,7 @@ if __name__ == "__main__":
             VALUES
                 (1, 'Box', 5, 1, 1, 0),
                 (2, 'Roll of Tape', 15, 1, 2, 1),
-                (3, 'Chewing Gum', 1, 0, 2, 0)
+                (3, 'Chewing Gum', 1, 0, 3, 0)
             """)
 
         StoreItems = []
@@ -53,6 +44,14 @@ if __name__ == "__main__":
        # populate_store_items(StoreItems)
         print(f"{'Item':<15}\t{'Cost':>6}\t{'Enc':>5}\t{'Packable':<8}")
         for item in StoreItems:
+            print_item(item)
+
+        print('\n---\nTL >= 2\n---')
+        PackableItems = []
+        p_items = link.execute_read_query("SELECT * from items WHERE tl >= 2")
+        for item in p_items:
+            PackableItems.append(Item.deserialize(item))
+        for item in PackableItems:
             print_item(item)
     finally:
         link.close()
