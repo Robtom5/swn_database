@@ -34,4 +34,4 @@ class Connection(ISerializable):
 
     def serialize(self) -> str:
         """Serialize an instance of the class as a string"""
-        return (f"{self.ID};{self.ID_Planet_1};{self.ID_Planet_2}")
+        return f"{self.ID};{self.ID_Planet_1};{self.ID_Planet_2}"

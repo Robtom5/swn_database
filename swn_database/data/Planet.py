@@ -6,8 +6,8 @@ from .DataStructures import Coordinate
 
 class Planet(ISerializable):
 
-    def __init__(self, name: str, coords: Coordinate, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *, name: str, coords: Coordinate, **kwargs):
+        super().__init__(**kwargs)
         self._Coordinates = coords
         self.Name = name
 

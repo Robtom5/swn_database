@@ -7,17 +7,18 @@ import abc
 
 class Item(ISerializable):
     def __init__(self,
+                 *,
                  name: str,
                  cost: int = 0,
                  enc: int = 1,
                  tl: int = 4,
                  packable: bool = False,
-                 *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._Name = name
+                 **kwargs):
+        super().__init__(**kwargs)
+        self._Name = name.replace(";", "")
         self._Cost = cost
-        self._Encumbrance = enc
-        self._tl = tl
+        self._Encumbrance = enc % 10  # We dont support encumberances >9 or <0
+        self._TL = tl % 6  # Tl should be between 0 and 5
         self._Packable = packable
 
     @property
@@ -41,13 +42,34 @@ class Item(ISerializable):
         '''Returns if the item can be bundled together'''
         return self._Packable
 
+    @classmethod
+    def deserialize(cls, string_representation: str):
+        """Deserialize the class from a string"""
+        ID = int(string_representation[0:10])
+        packable = bool(string_representation[10])
+        cost = int(string_representation[11:17])
+        enc = int(string_representation[17])
+        tl = int(string_representation[18])
+        name = string_representation[19:]
+        return Item(ID=ID, name=name, cost=cost, enc=enc, tl=tl, packable=packable)
+
+    def serialize(self) -> str:
+        """Serialize an instance of the class as a string"""
+        return f"{self.ID:0>10}{int(self.Packable):1}{self.Cost:0>6}{self.Encumbrance}{self.TL}{self.Name}"
+
+    def __eq__(self, other):
+        if isinstance(other, Item):
+            return other.serialize() == self.serialize()
+        return False
+
 
 class Weapon(Item, metaclass=abc.ABCMeta):
     def __init__(self,
+                 *,
                  damage: str = "1d6",
                  attr: str="STR/DEX",
-                 *args, **kwargs):
-        super().__init__(*args, **kwargs)
+                 **kwargs):
+        super().__init__(**kwargs)
 
         self._Damage = DiceRoll(damage)
         self._Attribute = attr
@@ -63,9 +85,10 @@ class Weapon(Item, metaclass=abc.ABCMeta):
 
 class MeleeWeapon(Weapon):
     def __init__(self,
+                 *,
                  shock_dmg: int = 1,
                  shock_thresh: int = 15,
-                 *args, **kwargs):
+                 **kwargs):
         self._Shock_Damage = shock_dmg
         self._Shock_Threshold = shock_thresh
 
@@ -80,13 +103,14 @@ class MeleeWeapon(Weapon):
 
 class RangedWeapon(Weapon):
     def __init__(self,
+                 *,
                  mag: int = 1,
                  range_short: int=0,
                  range_long: int=10,
                  burst: bool = False,
                  slow_reload: bool = False,
                  energy_weapon: bool = False,
-                 *args, **kwargs):
+                 **kwargs):
         super().__init__(*args, **kwargs)
         self._Mag = mag
         self._Range_Short = range_short
@@ -136,4 +160,3 @@ class HeavyWeapon(Weapon):
     @property
     def Vehicle_Only(self):
         return self._Vehicle_Only
-    
