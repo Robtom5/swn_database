@@ -15,5 +15,3 @@ if __name__ == "__main__":
 
     populate_planets(PLANETS)
     [print(planet) for planet in PLANETS]
-
-    pass
