@@ -6,7 +6,10 @@ from swn_database import SQLDatabaseLink
 def print_item(item: Item):
     tick = u"\u2713"
     cross = u"\u2717"
-    print(f"{item.Name:<15}\t{item.Cost:>6}\t{item.Encumbrance:>5}\t{tick if item.Packable else cross:^8}")
+    pound = "#"
+    empty = ""
+    # print(f"{item.Name:<15}\t{item.Cost:>6}\t{item.Encumbrance:>5}\t{tick if item.Packable else cross:^8}")
+    print(f"{item.Name:<15}\t{item.Cost:>6}\t{item.Encumbrance:>5}{pound if item.Packable else empty}\t{item.TL:>2}")
 
 
 if __name__ == "__main__":
@@ -42,7 +45,8 @@ if __name__ == "__main__":
 
 
        # populate_store_items(StoreItems)
-        print(f"{'Item':<15}\t{'Cost':>6}\t{'Enc':>5}\t{'Packable':<8}")
+        # print(f"{'Item':<15}\t{'Cost':>6}\t{'Enc':>5}\t{'Packable':<8}")
+        print(f"{'Item':<15}\t{'Cost':>6}\t{'Enc':>5}\t{'TL':>2}")
         for item in StoreItems:
             print_item(item)
 
