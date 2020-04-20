@@ -4,7 +4,7 @@ from swn_database.data import Item, MeleeWeapon, RangedWeapon
 
 
 def test_item_serialize_returnsExpectedString():
-    expected_string = "0000000001100002030TestItem"
+    expected_string = (1, 'TestItem', 20, 3, 0, 1)
 
     item = Item(name="TestItem", ID=1, cost=20, packable=True, enc=3, tl=0)
     serialized_string = item.serialize()
@@ -12,7 +12,7 @@ def test_item_serialize_returnsExpectedString():
 
 
 def test_item_deserialize_returnsExpectedItem():
-    serialized_item = "0000000001100002030TestItem"
+    serialized_item = (1, 'TestItem', 20, 3, 0, 1)
     expected_item = Item(name="TestItem", ID=1, cost=20,
                          packable=True, enc=3, tl=0)
 
@@ -39,7 +39,7 @@ def test_item_equality_shouldReturnExpectedResult(item1props, item2props, expect
 def test_item_equality_shouldReturnFalseIfNotComparedWithItem():
     class Mock_Equatable():
         def serialize(self):
-            return "0000000001100002030TestItem"
+            return "(1, 'TestItem', 20, 3, 0, 1)"
 
     item = Item(name="TestItem", ID=1, cost=20, packable=True, enc=3, tl=0)
 

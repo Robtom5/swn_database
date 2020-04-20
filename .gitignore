@@ -29,3 +29,5 @@ packaging/*tar.xz
 .vscode
 htmlcov
 *.sublime-*
+*.sqlite
+*.db

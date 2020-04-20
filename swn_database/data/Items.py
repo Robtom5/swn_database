@@ -6,6 +6,7 @@ import abc
 
 
 class Item(ISerializable):
+    '''Object representation of an Item.'''
     def __init__(self,
                  *,
                  name: str,
@@ -15,47 +16,47 @@ class Item(ISerializable):
                  packable: bool = False,
                  **kwargs):
         super().__init__(**kwargs)
-        self._Name = name.replace(";", "")
-        self._Cost = cost
-        self._Encumbrance = enc % 10  # We dont support encumberances >9 or <0
-        self._TL = tl % 6  # Tl should be between 0 and 5
-        self._Packable = packable
+        self._name = name.replace(";", "")
+        self._cost = cost
+        self._encumbrance = enc % 10  # We dont support encumberances >9 or <0
+        self._tl = tl % 6  # Tl should be between 0 and 5
+        self._packable = packable
 
     @property
-    def Name(self):
-        return self._Name
+    def name(self):
+        return self._name
 
     @property
-    def Cost(self):
-        return self._Cost
+    def cost(self):
+        return self._cost
 
     @property
-    def Encumbrance(self):
-        return self._Encumbrance
+    def encumbrance(self):
+        return self._encumbrance
 
     @property
-    def TL(self):
-        return self._TL
+    def tl(self):
+        return self._tl
 
     @property
-    def Packable(self):
+    def packable(self):
         '''Returns if the item can be bundled together'''
-        return self._Packable
+        return self._packable
 
     @classmethod
-    def deserialize(cls, string_representation: str):
-        """Deserialize the class from a string"""
-        ID = int(string_representation[0:10])
-        packable = bool(string_representation[10])
-        cost = int(string_representation[11:17])
-        enc = int(string_representation[17])
-        tl = int(string_representation[18])
-        name = string_representation[19:]
+    def deserialize(cls, query_result: str):
+        """Deserialize the class from a sql query result"""
+        ID = int(query_result[0])
+        name = query_result[1]
+        cost = int(query_result[2])
+        enc = int(query_result[3])
+        tl = int(query_result[4])
+        packable = bool(query_result[5])
         return Item(ID=ID, name=name, cost=cost, enc=enc, tl=tl, packable=packable)
 
     def serialize(self) -> str:
         """Serialize an instance of the class as a string"""
-        return f"{self.ID:0>10}{int(self.Packable):1}{self.Cost:0>6}{self.Encumbrance}{self.TL}{self.Name}"
+        return (self.ID, self.name, self.cost, self.encumbrance, self.tl, int(self.packable))
 
     def __eq__(self, other):
         if isinstance(other, Item):
