@@ -30,3 +30,4 @@ packaging/*tar.xz
 htmlcov
 *.sublime-*
 *.sqlite
+*.db

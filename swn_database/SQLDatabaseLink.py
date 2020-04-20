@@ -4,47 +4,47 @@ import sqlite3
 
 class SQLDatabaseLink(object):
     def __init__(self, database_path):
-        self._Database_Path = database_path
-        self.Connection = None
+        self._database_path = database_path
+        self.conn = None
 
     @property
-    def Database_Path(self):
-        return self._Database_Path
+    def database_path(self):
+        return self._database_path
 
     def connect(self):
         self.close()
         try:
-            self.Connection = sqlite3.connect(self.Database_Path)
+            self.conn = sqlite3.connect(self.database_path)
             print("Connection to SQLite DB successful")
         except sqlite3.Error as e:
             print(f"The error '{e}' occured")
 
     def close(self):
-        if self.Connection is not None:
-            self.Connection.close()
-            self.Connection = None
+        if self.conn is not None:
+            self.conn.close()
+            self.conn = None
 
     def execute_query(self, query, verbose=False):
-        if self.Connection is None:
+        if self.conn is None:
             raise Error("Must connect to database first")
-        cursor = self.Connection.cursor()
+        cursor = self.conn.cursor()
         try:
-            cursor.execute(query)
-            self.Connection.commit()
+            cursor.executescript(query)
+            self.conn.commit()
             if verbose:
                 print("Query executed successfully")
         except sqlite3.Error as e:
             print(f"The error '{e}' occured")
 
     def execute_read_query(self, query):
-        if self.Connection is None:
+        if self.conn is None:
             raise Error("Must connect to database first")
-        cursor = self.Connection.cursor()
+        cursor = self.conn.cursor()
         result = None
         try:
-            cursor.execute(query)
+            for subquery in query.split(";"):
+                cursor.execute(subquery)
             result = cursor.fetchall()
             return result
         except sqlite3.Error as e:
             print(f"The error '{e}' occured")
-
