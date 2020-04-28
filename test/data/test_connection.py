@@ -1,11 +1,11 @@
 #! /usr/bin/env python3
 import pytest
-from swn_database.data import Connection
+from swn_database.data import Connection, Coordinate
 
 
-def create_connection(con_id: int = 3, plan_id_1: int = 1, plan_id_2: int = 2) -> Connection:
+def create_connection(start_hex: str = "A1", end_hex: str="A2", conn_id: int=1) -> Connection:
     """Creates a new connection with the provided ids"""
-    return Connection(ID=con_id, ID_Planet_1=plan_id_1, ID_Planet_2=plan_id_2)
+    return Connection(start_hex=Coordinate.from_hex(start_hex), end_hex=Coordinate.from_hex(end_hex), conn_id=conn_id)
 
 
 def test_constructor_setsPropertiesCorrectly():
@@ -13,36 +13,18 @@ def test_constructor_setsPropertiesCorrectly():
     ID_Planet_2 = 2
     ID_Connection = 3
 
-    con = Connection(ID=ID_Connection, ID_Planet_1=ID_Planet_1,
-                     ID_Planet_2=ID_Planet_2)
-    assert (con.ID == ID_Connection
-            and con.ID_Planet_1 == ID_Planet_1
-            and con.ID_Planet_2 == ID_Planet_2)
+    con = Connection(start_hex=ID_Planet_1, end_hex=ID_Planet_2,
+                     conn_id=ID_Connection)
+    assert (con.connection_id == ID_Connection
+            and con.start_hex == ID_Planet_1
+            and con.end_hex == ID_Planet_2)
 
-
-def test_fromPlanets_setsPropertiesCorrectly():
-    class Mock_Planet(object):
-        def __init__(self, ID: int):
-            self.ID = ID
-
-    ID_Planet_1 = 1
-    ID_Planet_2 = 2
-    ID_Connection = 3
-
-    mockPlanet1 = Mock_Planet(ID_Planet_1)
-    mockPlanet2 = Mock_Planet(ID_Planet_2)
-
-    con = Connection.fromPlanets(ID_Connection, mockPlanet1, mockPlanet2)
-    assert (con.ID == ID_Connection
-            and con.ID_Planet_1 == ID_Planet_1
-            and con.ID_Planet_2 == ID_Planet_2)
 
 
 equalityTestData = [
-    ((3, 1, 2), (3, 1, 2), True),
-    ((3, 1, 2), (3, 2, 1), True),
-    ((3, 1, 2), (3, 1, 3), False),
-    ((3, 1, 2), (4, 1, 2), False),
+    (("A1", "A2", 2), ("A1", "A2", 2), True),
+    (("A1", "A2", 2), ("A2", "A1", 2), False),
+    (("A1", "A2", 2), ("A1", "A2", 3), False)
 ]
 
 
@@ -58,24 +40,22 @@ def test_equality_shouldReturnsExpectedResult(con_1_ids, con_2_ids, expected_equ
 
 def test_equality_returnsFalseIfNotProvidedConnection():
     class Mock_Equatable():
-        def __init__(self, id, planet1id, planet2id):
-            self.ID = id
-            self.ID_Planet_1 = planet1id
-            self.ID_Planet_2 = planet2id
+        def __init__(self, start, end, conn):
+            self.start_hex = Coordinate.from_hex(start)
+            self.end_hex = Coordinate.from_hex(end)
+            self.connection_id = conn
 
-    con_1 = create_connection(3, 2, 1)
-    con_2 = Mock_Equatable(3, 2, 1)
+    con_1 = create_connection("A1", "A2", 1)
+    con_2 = Mock_Equatable("A1", "A2", 1)
     assert (con_1 == con_2) == False
 
 
 def test_serialize_returnsExpected():
-    expected = "3;1;2"
+    expected = ("A1", "A2", 1)
     con = create_connection()
     assert expected == con.serialize()
 
-
-def test_deserialize_returnsExpected():
-    initial = create_connection()
-    serialized = initial.serialize()
-    deserialized = Connection.deserialize(serialized)
-    assert initial == deserialized
+def test_str_returnsExpected():
+    expected = "A1 -> A2"
+    con = create_connection()
+    assert expected == f"{con}"

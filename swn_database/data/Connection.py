@@ -35,7 +35,7 @@ class Connection():
 
     def serialize(self) -> tuple:
         """Serialize an instance of the class as a string"""
-        return (self.start_hex, self.end_hex, self.connection_id)
+        return (f"{self.start_hex}", f"{self.end_hex}", self.connection_id)
 
     def __str__(self):
         return f"{self.start_hex} -> {self.end_hex}"
