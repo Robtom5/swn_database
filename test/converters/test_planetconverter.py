@@ -37,7 +37,7 @@ def strip_whitespace(string):
 def test_create_table_query_ReturnsExpectedQuery(converter: PlanetConverter):
     expected_query = """
             CREATE TABLE IF NOT EXISTS planets (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                planet_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL UNIQUE,
                 coordinate TEXT,
                 tl INTEGER,
@@ -74,7 +74,7 @@ def test_add_addsCorrectEntry(add_args, add_values, converter: PlanetConverter, 
             temp=None,
             pop=None,
             desc=add_args[1])
-    find_query = "SELECT id FROM planets WHERE name='mockplanet'"
+    find_query = "SELECT planet_id FROM planets WHERE name='mockplanet'"
     add_query = """INSERT INTO planets (
             name, 
             coordinate, 
@@ -134,7 +134,7 @@ def test_delete_deletes(converter: PlanetConverter, sql_connection):
     converter.delete(planet)
     queries = sql_connection.get_queries()
     delete_query = queries[0]
-    expected_query = f"DELETE FROM planets WHERE id = {planet.ID}"
+    expected_query = f"DELETE FROM planets WHERE planet_id = {planet.ID}"
     assert strip_whitespace(expected_query) == strip_whitespace(delete_query)
 
 
@@ -144,7 +144,7 @@ def test_load_by_id_loads(converter: PlanetConverter, sql_connection, planet, mo
         m.setattr(Planet, "deserialize", lambda n: n)
         returned = converter.load_by_id(planet.ID)
 
-    expected_query = f"SELECT * FROM planets WHERE id = {planet.ID}"
+    expected_query = f"SELECT * FROM planets WHERE planet_id = {planet.ID}"
     queries = sql_connection.get_queries()
     load_query = queries[0]
 
@@ -155,7 +155,7 @@ def test_load_by_id_loads(converter: PlanetConverter, sql_connection, planet, mo
 def test_check_exists_returnsTrueIfIdIsFound(converter: PlanetConverter, sql_connection):
     sql_connection.set_execute_read_results([2])
     name = "test planet"
-    expected_query = "SELECT id FROM planets WHERE name='test planet'"
+    expected_query = "SELECT planet_id FROM planets WHERE name='test planet'"
 
     result = converter.check_exists(name)
 
@@ -168,7 +168,7 @@ def test_check_exists_returnsTrueIfIdIsFound(converter: PlanetConverter, sql_con
 def test_check_exists_returnsFalseIfNoIdFound(converter: PlanetConverter, sql_connection):
     sql_connection.set_execute_read_results([None])
     name = "test planet"
-    expected_query = "SELECT id FROM planets WHERE name='test planet'"
+    expected_query = "SELECT planet_id FROM planets WHERE name='test planet'"
 
     result = converter.check_exists(name)
 

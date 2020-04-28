@@ -16,7 +16,7 @@ class PlanetConverter():
     def create_table_query(self):
         return f"""
             CREATE TABLE IF NOT EXISTS {self.table_name} (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                planet_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL UNIQUE,
                 coordinate TEXT,
                 tl INTEGER,
@@ -62,10 +62,10 @@ class PlanetConverter():
                     {f"'{desc}'" if desc is not None else "NULL"}
                     );
                     """
-        updated_entry = self.sql_link.execute_read_query(
+        new_entry = self.sql_link.execute_read_query(
             query + f"SELECT * FROM {self.table_name} WHERE name='{name}'")
-        if updated_entry:
-            return Planet.deserialize(updated_entry[0])
+        if new_entry:
+            return Planet.deserialize(new_entry[0])
         else:
             return None
 
@@ -133,14 +133,14 @@ class PlanetConverter():
                planet: Planet):
         self.sql_link.execute_query(f"""
             DELETE FROM {self.table_name}
-            WHERE id = {planet.ID}
+            WHERE planet_id = {planet.ID}
             """)
 
     def check_exists(self, name):
         exists = False
         existing_entry = self.sql_link.execute_read_query(f"""
             SELECT
-                id
+                planet_id
             FROM
                 {self.table_name}
             WHERE
@@ -152,7 +152,7 @@ class PlanetConverter():
         return exists
 
     def load_by_id(self, ID):
-        query_res = self.sql_link.execute_read_query(f"SELECT * FROM {self.table_name} WHERE id = {ID}")
+        query_res = self.sql_link.execute_read_query(f"SELECT * FROM {self.table_name} WHERE planet_id = {ID}")
         return Planet.deserialize(query_res)
 
     def load_by_name(self, name):
