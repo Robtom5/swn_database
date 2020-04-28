@@ -11,12 +11,12 @@ class ItemConverter():
     def create_table_query(self):
         return f"""
             CREATE TABLE IF NOT EXISTS {self.table_name} (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL UNIQUE,
-            cost INTEGER NOT NULL,
-            enc INTEGER NOT NULL,
-            tl INTEGER NOT NULL,
-            packable BIT NOT NULL
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                cost INTEGER NOT NULL,
+                enc INTEGER NOT NULL,
+                tl INTEGER NOT NULL,
+                packable BIT NOT NULL
             );
             """
 
@@ -75,8 +75,8 @@ class ItemConverter():
             WHERE id = {existing_item.ID}
             """)
 
-    def load_item_by_id(self, id):
-        query_res = self.sql_link.execute_read_query(f"SELECT * FROM {self.table_name} WHERE id ={id}")
+    def load_item_by_id(self, ID):
+        query_res = self.sql_link.execute_read_query(f"SELECT * FROM {self.table_name} WHERE id = {ID}")
         return Item.deserialize(query_res)
 
     def get_all_items(self):

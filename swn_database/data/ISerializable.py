@@ -12,11 +12,11 @@ class ISerializable(metaclass=abc.ABCMeta):
         return self._ID
 
     @abc.abstractmethod
-    def deserialize(serializable_as_string: str):
+    def deserialize(serializable_as_tuple: tuple):
         """Deserialize the class from a string"""
         raise NotImplementedError
 
     @abc.abstractmethod
-    def serialize(self) -> str:
+    def serialize(self) -> tuple:
         """Serialize an instance of the class as a string"""
         raise NotImplementedError

@@ -14,7 +14,7 @@ def print_item(item: Item):
 
 
 if __name__ == "__main__":
-    link = SQLDatabaseLink("./store.db")
+    link = SQLDatabaseLink("./demo.db")
     converter = ItemConverter(link)
     link.connect()
     try:

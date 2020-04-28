@@ -1,17 +1,34 @@
 #! /usr/bin/env python3
-import swn_database.data as swn_data
+from swn_database.data import Planet, Coordinate
+from swn_database import SQLDatabaseLink
+from swn_database.converters import PlanetConverter
 
-def populate_planets(planetList: list):
-    planetList.append(swn_data.Planet(ID=0, name="Planet A", coords=swn_data.Coordinate.From_Hex('B2')))
-    planetList.append(swn_data.Planet(ID=1, name="Planet B", coords=swn_data.Coordinate.From_Hex('B4')))
-    planetList.append(swn_data.Planet(ID=2, name="Planet C", coords=swn_data.Coordinate.From_Hex('A4')))
-    planetList.append(swn_data.Planet(ID=3, name="Planet D", coords=swn_data.Coordinate.From_Hex('A5')))
+def print_planet(planet):
+    print(f"{planet.coordinates} - {planet.name:<3}")
 
 if __name__ == "__main__":
-    CONNECTIONS = []
-    PLANETS = []
+    link = SQLDatabaseLink("./demo.db")
+    converter = PlanetConverter(link)
+    link.connect()
+    try:
+        # link.execute_query("DROP TABLE planets")
+        link.execute_query(converter.create_table_query)
+        converter.add(
+            name="Planet A",
+            coords=Coordinate.from_hex('B2'))
+        converter.add(
+            name="Planet B",
+            coords=Coordinate.from_hex('B4'))
+        converter.add(
+            name="Planet C",
+            coords=Coordinate.from_hex('A4'))
+        converter.add(
+            name="Planet D",
+            coords=Coordinate.from_hex('A5'))
 
-    #print(swn_data.Coordinate(1,2))
+        planet_items = converter.load_all()
 
-    populate_planets(PLANETS)
-    [print(planet) for planet in PLANETS]
+        for planet in planet_items:
+            print_planet(planet)
+    finally:
+        link.close()

@@ -110,7 +110,7 @@ def test_add_or_update_item_UpdatesItemIfExists(update_args, update_query, conve
     sql_connection.set_execute_read_results(
         [1, [(1, NAME, COST, ENC, TL, PACKABLE)]])
     with monkeypatch.context() as m:
-        m.setattr("swn_database.data.Item", MockItem)
+        m.setattr(Item, "deserialize", lambda n: n)
         returned_item = converter.add_or_update_item(
             update_args[0], update_args[1], update_args[2], update_args[3], update_args[4])
 
@@ -118,12 +118,7 @@ def test_add_or_update_item_UpdatesItemIfExists(update_args, update_query, conve
     queries = sql_connection.get_queries()
     assert strip_whitespace(find_query) == strip_whitespace(queries[0])
     assert strip_whitespace(update_query + f"SELECT * FROM items WHERE name='{NAME}'") == strip_whitespace(queries[1])
-
-    assert returned_item.name == NAME
-    assert returned_item.cost == COST
-    assert returned_item.encumbrance == ENC
-    assert returned_item.tl == TL
-    assert returned_item.packable == PACKABLE
+    assert returned_item == (1, NAME, COST, ENC, TL, PACKABLE)
 
 
 def test_delete_item_deletes_item(converter: ItemConverter, sql_connection, item):

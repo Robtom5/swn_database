@@ -15,7 +15,7 @@ class Coordinate(object):
         self.y = y
 
     @classmethod
-    def From_Hex(cls, hex_string):
+    def from_hex(cls, hex_string):
         match = Coordinate._coordinate_pattern.match(hex_string)
         if not match:
             raise ValueError("Invalid hex string")
@@ -47,6 +47,10 @@ class Coordinate(object):
             [string.ascii_uppercase[letter - 1] for letter in letters])
 
         return f"{letter_representation}{self.y}"
+
+    def __eq__(self, other):
+        if isinstance(other, Coordinate):
+            return (other.x == self.x) and (other.y == self.y)
 
 
 class DiceRoll(object):

@@ -16,15 +16,19 @@ def test_Coordinate_str_ReturnsExpectedHexRepresentation(coordinate):
 
 def test_Coordinate_From_Hex_ReturnsCoordinateWithCorrectValues():
     hex_string = "AB34"
-    coord = Coordinate.From_Hex(hex_string)
+    coord = Coordinate.from_hex(hex_string)
     assert coord.x == 28
     assert coord.y == 34
 
 
 def test_Coordinate_From_Hex_ThrowsValueError_WhenGivenInvalidHexString():
     with pytest.raises(ValueError) as e_info:
-        Coordinate.From_Hex("invalid")
+        Coordinate.from_hex("invalid")
 
+def test_Coordinate_eq_returnsTrueIfBothHaveSameValues():
+    first_coord = Coordinate(20, 19)
+    second_coord = Coordinate(20, 19)
+    assert first_coord == second_coord
 
 @pytest.fixture
 def diceroll():
