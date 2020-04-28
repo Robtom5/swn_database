@@ -1,37 +1,41 @@
 #! /usr/bin/env python3
 import sqlite3
-from .ISerializable import ISerializable
+from .DataStructures import Coordinate
 
 
-class Connection(ISerializable):
-    def __init__(self, ID_Planet_1: int, ID_Planet_2: int, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.ID_Planet_1 = ID_Planet_1
-        self.ID_Planet_2 = ID_Planet_2
+class Connection():
+    def __init__(self,
+                 *,
+                 start_hex: Coordinate,
+                 end_hex: Coordinate,
+                 conn_id: int,
+                 **kwargs):
+        super().__init__(**kwargs)
+        self._start_hex = start_hex
+        self._end_hex = end_hex
+        self._connection_id = conn_id
 
+    @property
+    def start_hex(self):
+        return self._start_hex
+
+    @property
+    def end_hex(self):
+        return self._end_hex
+
+    @property
+    def connection_id(self):
+        return self._connection_id
+    
     def __eq__(self, other):
         """Override of equality comparison"""
         if isinstance(other, Connection):
-            return (other.ID == self.ID
-                    and (other.ID_Planet_1 == self.ID_Planet_1 or other.ID_Planet_1 == self.ID_Planet_2)
-                    and (other.ID_Planet_2 == self.ID_Planet_1 or other.ID_Planet_2 == self.ID_Planet_2))
+            return other.serialize() == self.serialize()
         return False
 
-    @classmethod
-    def fromPlanets(cls, ID: int, planet_1, planet_2):
-        return Connection(ID=ID, ID_Planet_1=planet_1.ID, ID_Planet_2=planet_2.ID)
-
-    @property
-    def ID(self):
-        return self._ID
-
-    @classmethod
-    def deserialize(cls, string_representation: str):
-        """Deserialize the class from a string"""
-        connection_ID, planet_1, planet_2 = map(
-            int, string_representation.split(";"))
-        return Connection(ID=connection_ID, ID_Planet_1=planet_1, ID_Planet_2=planet_2)
-
-    def serialize(self) -> str:
+    def serialize(self) -> tuple:
         """Serialize an instance of the class as a string"""
-        return f"{self.ID};{self.ID_Planet_1};{self.ID_Planet_2}"
+        return (self.start_hex, self.end_hex, self.connection_id)
+
+    def __str__(self):
+        return f"{self.start_hex} -> {self.end_hex}"
