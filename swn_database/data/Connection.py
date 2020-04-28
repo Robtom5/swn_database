@@ -26,7 +26,7 @@ class Connection():
     @property
     def connection_id(self):
         return self._connection_id
-    
+
     def __eq__(self, other):
         """Override of equality comparison"""
         if isinstance(other, Connection):
