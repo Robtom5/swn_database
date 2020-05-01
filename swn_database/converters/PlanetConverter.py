@@ -153,11 +153,15 @@ class PlanetConverter():
 
     def load_by_id(self, ID):
         query_res = self.sql_link.execute_read_query(f"SELECT * FROM {self.table_name} WHERE planet_id = {ID}")
-        return Planet.deserialize(query_res)
+        return Planet.deserialize(query_res[0])
 
     def load_by_name(self, name):
-        query_res = self.sql_link.execute_read_query(f"SELECT * FROM {self.table_name} WHERE name = {name}")
-        return Planet.deserialize(query_res)
+        query_res = self.sql_link.execute_read_query(f"SELECT * FROM {self.table_name} WHERE name = '{name}'")
+        return Planet.deserialize(query_res[0])
 
-    def load_all(self):
-        return [Planet.deserialize(res) for res in self.sql_link.execute_read_query(f"SELECT * FROM {self.table_name}")]
+    def load_all(self, order = None):
+        query = f"SELECT * FROM {self.table_name}"
+        if order is not None:
+            ordering = f" ORDER BY {order} ASC"
+            query = query + ordering
+        return [Planet.deserialize(res) for res in self.sql_link.execute_read_query(query)]

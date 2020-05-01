@@ -29,8 +29,8 @@ class ConnectionConverter():
                 start_hex,
                 end_hex
             ) VALUES (
-                '{start_hex}',
-                '{end_hex}'
+                '{start_hex.upper()}',
+                '{end_hex.upper()}'
             );
             SELECT * FROM {self.table_name} 
             WHERE start_hex='{start_hex}' AND end_hex='{end_hex}'"""

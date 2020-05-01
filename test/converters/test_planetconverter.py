@@ -139,7 +139,7 @@ def test_delete_deletes(converter: PlanetConverter, sql_connection):
 
 
 def test_load_by_id_loads(converter: PlanetConverter, sql_connection, planet, monkeypatch):
-    sql_connection.set_execute_read_results([planet])
+    sql_connection.set_execute_read_results([[planet,]])
     with monkeypatch.context() as m:
         m.setattr(Planet, "deserialize", lambda n: n)
         returned = converter.load_by_id(planet.ID)
@@ -179,12 +179,12 @@ def test_check_exists_returnsFalseIfNoIdFound(converter: PlanetConverter, sql_co
 
 
 def test_load_by_name_loads(converter: PlanetConverter, sql_connection, planet, monkeypatch):
-    sql_connection.set_execute_read_results([planet])
+    sql_connection.set_execute_read_results([[planet,]])
     with monkeypatch.context() as m:
         m.setattr(Planet, "deserialize", lambda n: n)
         returned = converter.load_by_name(planet.name)
 
-    expected_query = f"SELECT * FROM planets WHERE name = {planet.name}"
+    expected_query = f"SELECT * FROM planets WHERE name = '{planet.name}'"
     queries = sql_connection.get_queries()
     load_query = queries[0]
     assert returned == planet
@@ -192,12 +192,24 @@ def test_load_by_name_loads(converter: PlanetConverter, sql_connection, planet, 
 
 
 def test_load_all_loads(converter: PlanetConverter, sql_connection, planet, monkeypatch):
-    sql_connection.set_execute_read_results([[planet]])
+    sql_connection.set_execute_read_results([[planet,]])
     with monkeypatch.context() as m:
         m.setattr(Planet, "deserialize", lambda n: n)
         returned = converter.load_all()
 
     expected_query = f"SELECT * FROM planets"
+    queries = sql_connection.get_queries()
+    load_query = queries[0]
+    assert returned == [planet]
+    assert load_query == expected_query
+
+def test_load_all_loadsAndSorts(converter: PlanetConverter, sql_connection, planet, monkeypatch):
+    sql_connection.set_execute_read_results([[planet,]])
+    with monkeypatch.context() as m:
+        m.setattr(Planet, "deserialize", lambda n: n)
+        returned = converter.load_all(order="name")
+
+    expected_query = f"SELECT * FROM planets ORDER BY name ASC"
     queries = sql_connection.get_queries()
     load_query = queries[0]
     assert returned == [planet]

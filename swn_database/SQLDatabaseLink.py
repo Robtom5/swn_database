@@ -24,7 +24,7 @@ class SQLDatabaseLink(object):
             self.conn.close()
             self.conn = None
 
-    def execute_query(self, query, verbose=False):
+    def execute_query(self, query, verbose=False, suppress=False):
         if self.conn is None:
             raise Error("Must connect to database first")
         cursor = self.conn.cursor()
@@ -34,9 +34,10 @@ class SQLDatabaseLink(object):
             if verbose:
                 print("Query executed successfully")
         except sqlite3.Error as e:
-            print(f"The error '{e}' occured")
+            if not suppress:
+                print(f"The error '{e}' occured")
 
-    def execute_read_query(self, query):
+    def execute_read_query(self, query, suppress=False):
         if self.conn is None:
             raise Error("Must connect to database first")
         cursor = self.conn.cursor()
@@ -47,4 +48,8 @@ class SQLDatabaseLink(object):
             result = cursor.fetchall()
             return result
         except sqlite3.Error as e:
-            print(f"The error '{e}' occured")
+            if not suppress:
+                print(f"The error '{e}' occured")
+
+    def commit(self):
+        self.conn.commit()
