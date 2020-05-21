@@ -25,6 +25,7 @@ class MockPlanet():
         self.temperature = None
         self.population = None
         self.description = None
+        self.notes = None
 
     def deserialize(self, serialized):
         pass
@@ -45,7 +46,8 @@ def test_create_table_query_ReturnsExpectedQuery(converter: PlanetConverter):
                 atmosphere INTEGER,
                 temperature INTEGER,
                 population INTEGER,
-                description TEXT
+                description TEXT,
+                notes TEXT
             );
             """
     assert strip_whitespace(
@@ -53,15 +55,18 @@ def test_create_table_query_ReturnsExpectedQuery(converter: PlanetConverter):
 
 
 ADD_TEST_DATA = [
-    (("A2", None), "('mockplanet', 'A2', NULL, NULL, NULL, NULL, NULL, NULL);"),
-    ((None, None), "('mockplanet', NULL, NULL, NULL, NULL, NULL, NULL, NULL);"),
-    (("A2", "Desc"), "('mockplanet', 'A2', NULL, NULL, NULL, NULL, NULL, 'Desc');"),
-    ((None, "Desc"), "('mockplanet', NULL, NULL, NULL, NULL, NULL, NULL, 'Desc');")
+    (("A2", None), "('mockplanet', 'A2', NULL, NULL, NULL, NULL, NULL, NULL, NULL);"),
+    ((None, None), "('mockplanet', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);"),
+    (("A2", "Desc"), "('mockplanet', 'A2', NULL, NULL, NULL, NULL, NULL, 'Desc', NULL);"),
+    ((None, "Desc"), "('mockplanet', NULL, NULL, NULL, NULL, NULL, NULL, 'Desc', NULL);")
 ]
 
 
 @pytest.mark.parametrize("add_args, add_values", ADD_TEST_DATA)
-def test_add_addsCorrectEntry(add_args, add_values, converter: PlanetConverter, sql_connection, monkeypatch):
+def test_add_addsCorrectEntry(add_args, add_values,
+                              converter: PlanetConverter,
+                              sql_connection,
+                              monkeypatch):
     sql_connection.set_execute_read_results([False, [("deserialized")]])
     with monkeypatch.context() as m:
         m.setattr(Planet, "deserialize", lambda n: n)
@@ -73,17 +78,19 @@ def test_add_addsCorrectEntry(add_args, add_values, converter: PlanetConverter, 
             atmos=None,
             temp=None,
             pop=None,
-            desc=add_args[1])
+            desc=add_args[1],
+            notes=None)
     find_query = "SELECT planet_id FROM planets WHERE name='mockplanet'"
     add_query = """INSERT INTO planets (
-            name, 
-            coordinate, 
-            tl, 
-            biosphere, 
-            atmosphere, 
-            temperature, 
-            population, 
-            description)
+            name,
+            coordinate,
+            tl,
+            biosphere,
+            atmosphere,
+            temperature,
+            population,
+            description,
+            notes)
         VALUES """ + add_values + "SELECT * FROM planets WHERE name='mockplanet'"
 
     queries = sql_connection.get_queries()
@@ -93,15 +100,20 @@ def test_add_addsCorrectEntry(add_args, add_values, converter: PlanetConverter, 
     assert returned == "deserialized"
 
 
-def test_add_returnsNoneIfFailsToAdd(converter: PlanetConverter, sql_connection):
+def test_add_returnsNoneIfFailsToAdd(converter: PlanetConverter,
+                                     sql_connection):
     sql_connection.set_execute_read_results([False, None])
     returned = converter.add_or_update("mockplanet")
-    assert returned == None
+    assert returned is None
 
-def test_update_planet_executesCorrectQuery(converter: PlanetConverter, sql_connection, planet, monkeypatch):
-    sql_connection.set_execute_read_results([["deserialized",]])
 
-    update_query = """UPDATE planets 
+def test_update_planet_executesCorrectQuery(converter: PlanetConverter,
+                                            sql_connection,
+                                            planet,
+                                            monkeypatch):
+    sql_connection.set_execute_read_results([["deserialized", ]])
+
+    update_query = """UPDATE planets
         SET
             description='desc'
         WHERE
@@ -118,15 +130,17 @@ def test_update_planet_executesCorrectQuery(converter: PlanetConverter, sql_conn
     assert strip_whitespace(update_query) == strip_whitespace(queries[0])
     assert returned == "deserialized"
 
+
 def test_update_returnsNoneIfNoValuesToUpdate(converter: PlanetConverter):
     returned = converter.update("mockplanet")
-    assert returned == None
+    assert returned is None
 
 
-def test_update_returnsNoneIfFailsToUpdate(converter: PlanetConverter, sql_connection):
+def test_update_returnsNoneIfFailsToUpdate(converter: PlanetConverter,
+                                           sql_connection):
     sql_connection.set_execute_read_results([True, None])
     returned = converter.add_or_update("mockplanet", desc="description")
-    assert returned == None
+    assert returned is None
 
 
 def test_delete_deletes(converter: PlanetConverter, sql_connection):
@@ -138,8 +152,11 @@ def test_delete_deletes(converter: PlanetConverter, sql_connection):
     assert strip_whitespace(expected_query) == strip_whitespace(delete_query)
 
 
-def test_load_by_id_loads(converter: PlanetConverter, sql_connection, planet, monkeypatch):
-    sql_connection.set_execute_read_results([[planet,]])
+def test_load_by_id_loads(converter: PlanetConverter,
+                          sql_connection,
+                          planet,
+                          monkeypatch):
+    sql_connection.set_execute_read_results([[planet, ]])
     with monkeypatch.context() as m:
         m.setattr(Planet, "deserialize", lambda n: n)
         returned = converter.load_by_id(planet.ID)
@@ -152,7 +169,8 @@ def test_load_by_id_loads(converter: PlanetConverter, sql_connection, planet, mo
     assert load_query == expected_query
 
 
-def test_check_exists_returnsTrueIfIdIsFound(converter: PlanetConverter, sql_connection):
+def test_check_exists_returnsTrueIfIdIsFound(converter: PlanetConverter,
+                                             sql_connection):
     sql_connection.set_execute_read_results([2])
     name = "test planet"
     expected_query = "SELECT planet_id FROM planets WHERE name='test planet'"
@@ -165,7 +183,8 @@ def test_check_exists_returnsTrueIfIdIsFound(converter: PlanetConverter, sql_con
     assert strip_whitespace(find_query) == strip_whitespace(expected_query)
 
 
-def test_check_exists_returnsFalseIfNoIdFound(converter: PlanetConverter, sql_connection):
+def test_check_exists_returnsFalseIfNoIdFound(converter: PlanetConverter,
+                                              sql_connection):
     sql_connection.set_execute_read_results([None])
     name = "test planet"
     expected_query = "SELECT planet_id FROM planets WHERE name='test planet'"
@@ -178,8 +197,11 @@ def test_check_exists_returnsFalseIfNoIdFound(converter: PlanetConverter, sql_co
     assert strip_whitespace(find_query) == strip_whitespace(expected_query)
 
 
-def test_load_by_name_loads(converter: PlanetConverter, sql_connection, planet, monkeypatch):
-    sql_connection.set_execute_read_results([[planet,]])
+def test_load_by_name_loads(converter: PlanetConverter,
+                            sql_connection,
+                            planet,
+                            monkeypatch):
+    sql_connection.set_execute_read_results([[planet, ]])
     with monkeypatch.context() as m:
         m.setattr(Planet, "deserialize", lambda n: n)
         returned = converter.load_by_name(planet.name)
@@ -191,8 +213,23 @@ def test_load_by_name_loads(converter: PlanetConverter, sql_connection, planet, 
     assert load_query == expected_query
 
 
-def test_load_all_loads(converter: PlanetConverter, sql_connection, planet, monkeypatch):
-    sql_connection.set_execute_read_results([[planet,]])
+def test_load_by_name_returnsNoneWhenNoResult(converter: PlanetConverter,
+                                              sql_connection,
+                                              planet):
+    sql_connection.set_execute_read_results([[]])
+    returned = converter.load_by_name(planet.name)
+    expected_query = f"SELECT * FROM planets WHERE name = '{planet.name}'"
+    queries = sql_connection.get_queries()
+    load_query = queries[0]
+    assert returned is None
+    assert load_query == expected_query
+
+
+def test_load_all_loads(converter: PlanetConverter,
+                        sql_connection,
+                        planet,
+                        monkeypatch):
+    sql_connection.set_execute_read_results([[planet, ]])
     with monkeypatch.context() as m:
         m.setattr(Planet, "deserialize", lambda n: n)
         returned = converter.load_all()
@@ -203,8 +240,28 @@ def test_load_all_loads(converter: PlanetConverter, sql_connection, planet, monk
     assert returned == [planet]
     assert load_query == expected_query
 
-def test_load_all_loadsAndSorts(converter: PlanetConverter, sql_connection, planet, monkeypatch):
-    sql_connection.set_execute_read_results([[planet,]])
+
+def test_get_planet_name_getsCorrectName(converter: PlanetConverter,
+                                         sql_connection,
+                                         planet: Planet,
+                                         monkeypatch):
+    sql_connection.set_execute_read_results([[(planet.name, )]])
+    with monkeypatch.context() as m:
+        m.setattr(Planet, "deserialize", lambda n: n)
+        returned = converter.get_planet_name(planet.ID)
+
+    expected_query = f"SELECT name FROM planets WHERE planet_id = {planet.ID}"
+    queries = sql_connection.get_queries()
+    load_query = queries[0]
+    assert returned == planet.name
+    assert load_query == expected_query
+
+
+def test_load_all_loadsAndSorts(converter: PlanetConverter,
+                                sql_connection,
+                                planet,
+                                monkeypatch):
+    sql_connection.set_execute_read_results([[planet, ]])
     with monkeypatch.context() as m:
         m.setattr(Planet, "deserialize", lambda n: n)
         returned = converter.load_all(order="name")

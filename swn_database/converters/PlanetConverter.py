@@ -8,14 +8,10 @@ class PlanetConverter():
     def __init__(self, link: SQLDatabaseLink):
         self.sql_link = link
 
-    @property
-    def table_name(self):
-        return "planets"
+    table_name="planets"
 
-    @property
-    def create_table_query(self):
-        return f"""
-            CREATE TABLE IF NOT EXISTS {self.table_name} (
+    create_table_query="""
+            CREATE TABLE IF NOT EXISTS planets (
                 planet_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL UNIQUE,
                 coordinate TEXT,
@@ -24,7 +20,8 @@ class PlanetConverter():
                 atmosphere INTEGER,
                 temperature INTEGER,
                 population INTEGER,
-                description TEXT
+                description TEXT,
+                notes TEXT
             );
             """
 
@@ -36,20 +33,22 @@ class PlanetConverter():
             atmos: int = None,
             temp: int = None,
             pop: int = None,
-            desc: str = None
+            desc: str = None,
+            notes: str = None
             ):
 
         query = f"""
             INSERT INTO
                 {self.table_name} (
-                    name, 
-                    coordinate, 
-                    tl, 
-                    biosphere, 
-                    atmosphere, 
-                    temperature, 
-                    population, 
-                    description)""" + f"""
+                    name,
+                    coordinate,
+                    tl,
+                    biosphere,
+                    atmosphere,
+                    temperature,
+                    population,
+                    description,
+                    notes)""" + f"""
             VALUES
                 (
                     '{name}',
@@ -59,14 +58,17 @@ class PlanetConverter():
                     {atmos},
                     {temp},
                     {pop}, """.replace("None", "NULL") + f"""
-                    {f"'{desc}'" if desc is not None else "NULL"}
+                    {f"'{desc}'," if desc is not None else "NULL,"}
+                    {f"'{notes}'" if notes is not None else "NULL"}
                     );
                     """
         new_entry = self.sql_link.execute_read_query(
             query + f"SELECT * FROM {self.table_name} WHERE name='{name}'")
         if new_entry:
+            self.sql_link.commit()
             return Planet.deserialize(new_entry[0])
         else:
+            self.sql_link.rollback()
             return None
 
     def update(self,
@@ -77,9 +79,10 @@ class PlanetConverter():
                atmos: int = None,
                temp: int = None,
                pop: int = None,
-               desc: str = None
+               desc: str = None,
+               notes: str = None
                ):
-        if not all(arg is None for arg in [coords, tl, bio, atmos, temp, pop, desc]):
+        if not all(arg is None for arg in [coords, tl, bio, atmos, temp, pop, desc, notes]):
             query = f"""
                 UPDATE
                     {self.table_name}
@@ -91,28 +94,32 @@ class PlanetConverter():
                     {f"temperature={temp}" if temp is not None else ""}
                     {f"population={pop}" if pop is not None else ""}
                     {f"description='{desc}'" if desc is not None else ""}
+                    {f"notes='{notes}'" if notes is not None else ""}
                 WHERE
                     name = '{name}';
             """
             new_entry = self.sql_link.execute_read_query(
                 query + f"SELECT * FROM {self.table_name} WHERE name='{name}'")
             if new_entry:
+                self.sql_link.commit()
                 return Planet.deserialize(new_entry[0])
             else:
+                self.sql_link.rollback()
                 return None
         else:
             return None
 
     def update_planet(self, planet: Planet):
         return self.update(
-            name = planet.name,
-            coords = planet.coordinates,
-            tl = planet.tl,
-            bio = planet.biosphere,
-            atmos = planet.atmosphere,
-            temp = planet.temperature,
-            pop = planet.population,
-            desc = planet.description)
+            name=planet.name,
+            coords=planet.coordinates,
+            tl=planet.tl,
+            bio=planet.biosphere,
+            atmos=planet.atmosphere,
+            temp=planet.temperature,
+            pop=planet.population,
+            desc=planet.description,
+            notes=planet.notes)
 
     def add_or_update(self,
                       name: str,
@@ -122,12 +129,13 @@ class PlanetConverter():
                       atmos: int = None,
                       temp: int = None,
                       pop: int = None,
-                      desc: str = None
+                      desc: str = None,
+                      notes: str = None
                       ):
         if self.check_exists(name):
-            return self.update(name, coords, tl, bio, atmos, temp, pop, desc)
+            return self.update(name, coords, tl, bio, atmos, temp, pop, desc, notes)
         else:
-            return self.add(name, coords, tl, bio, atmos, temp, pop, desc)
+            return self.add(name, coords, tl, bio, atmos, temp, pop, desc, notes)
 
     def delete(self,
                planet: Planet):
@@ -135,6 +143,7 @@ class PlanetConverter():
             DELETE FROM {self.table_name}
             WHERE planet_id = {planet.ID}
             """)
+        self.sql_link.commit()
 
     def check_exists(self, name):
         exists = False
@@ -151,17 +160,31 @@ class PlanetConverter():
 
         return exists
 
+    def get_planet_name(self, ID):
+        query_res = self.sql_link.execute_read_query(
+            f"SELECT name FROM {self.table_name} WHERE planet_id = {ID}",
+            suppress=True)
+        return query_res[0][0] if query_res else None
+
     def load_by_id(self, ID):
-        query_res = self.sql_link.execute_read_query(f"SELECT * FROM {self.table_name} WHERE planet_id = {ID}")
+        query_res = self.sql_link.execute_read_query(
+            f"SELECT * FROM {self.table_name} WHERE planet_id = {ID}")
         return Planet.deserialize(query_res[0])
 
     def load_by_name(self, name):
-        query_res = self.sql_link.execute_read_query(f"SELECT * FROM {self.table_name} WHERE name = '{name}'")
-        return Planet.deserialize(query_res[0])
+        query_res = self.sql_link.execute_read_query(
+            f"SELECT * FROM {self.table_name} WHERE name = '{name}'")
+        if query_res:
+            return Planet.deserialize(query_res[0])
+        else:
+            return None
 
-    def load_all(self, order = None):
+    def load_all(self, order=None):
         query = f"SELECT * FROM {self.table_name}"
         if order is not None:
             ordering = f" ORDER BY {order} ASC"
             query = query + ordering
         return [Planet.deserialize(res) for res in self.sql_link.execute_read_query(query)]
+
+    def available_planets(self):
+        return self.sql_link.execute_read_query(f"SELECT name FROM {self.table_name}")

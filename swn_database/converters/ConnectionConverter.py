@@ -32,7 +32,7 @@ class ConnectionConverter():
                 '{start_hex.upper()}',
                 '{end_hex.upper()}'
             );
-            SELECT * FROM {self.table_name} 
+            SELECT * FROM {self.table_name}
             WHERE start_hex='{start_hex}' AND end_hex='{end_hex}'"""
         new_entry = self.sql_link.execute_read_query(query)
         if new_entry:
@@ -49,17 +49,27 @@ class ConnectionConverter():
             """)
 
     def load_by_id(self, connection_id: int):
-        start_raw, end_raw, conn_id = self.sql_link.execute_read_query(f"SELECT * FROM {self.table_name} WHERE connection_id = {connection_id}")
+        start_raw, end_raw, conn_id = self.sql_link.execute_read_query(f"""
+            SELECT * FROM {self.table_name}
+            WHERE connection_id = {connection_id}
+            """)
         start_hex = Coordinate.from_hex(start_raw)
         end_hex = Coordinate.from_hex(end_raw)
-        return Connection(start_hex=start_hex, end_hex=end_hex, conn_id=conn_id)
+        return Connection(start_hex=start_hex,
+                          end_hex=end_hex,
+                          conn_id=conn_id)
 
     def load_all(self):
-        return [Connection(start_hex=Coordinate.from_hex(start), end_hex=Coordinate.from_hex(end), conn_id=conn_id) for start, end, conn_id in self.sql_link.execute_read_query(f"SELECT * FROM {self.table_name}")]
+        return [Connection(start_hex=Coordinate.from_hex(start),
+                           end_hex=Coordinate.from_hex(end),
+                           conn_id=conn_id)
+                for start, end, conn_id
+                in self.sql_link.execute_read_query(
+                    f"SELECT * FROM {self.table_name}")]
 
     def create_bidirectional_connection(self, planet_1, planet_2):
         self.sql_link.execute_query(f"""
-            INSERT INTO {self.table_name} (start_hex, end_hex) VALUES 
+            INSERT INTO {self.table_name} (start_hex, end_hex) VALUES
                 ('{planet_1.coordinates}','{planet_2.coordinates}'),
                 ('{planet_2.coordinates}','{planet_1.coordinates}');""")
 

@@ -1,5 +1,4 @@
 #! /usr/bin/env python3
-import sqlite3
 from .ISerializable import ISerializable
 from .DataStructures import Coordinate
 
@@ -16,6 +15,7 @@ class Planet(ISerializable):
                  temp: int,
                  pop: int,
                  description: str,
+                 notes: str,
                  **kwargs):
         super().__init__(**kwargs)
         self._name = name.replace(";", "")
@@ -26,6 +26,7 @@ class Planet(ISerializable):
         self._temperature = temp
         self._population = pop
         self.description = description
+        self.notes = notes
 
     @property
     def name(self):
@@ -65,6 +66,16 @@ class Planet(ISerializable):
             val = val.replace(";", "")
         self._description = val
 
+    @property
+    def notes(self):
+        return self._notes
+
+    @notes.setter
+    def notes(self, val):
+        if val is not None:
+            val = val.replace(";", "")
+        self._notes = val
+
     @classmethod
     def deserialize(cls, serialized_data: tuple):
         """Deserialize the class from a string"""
@@ -78,6 +89,7 @@ class Planet(ISerializable):
         temp = serialized_data[6]
         pop = serialized_data[7]
         desc = serialized_data[8]
+        notes = serialized_data[9]
         return Planet(
             ID=ID,
             name=name,
@@ -87,10 +99,10 @@ class Planet(ISerializable):
             atmos=atmos,
             temp=temp,
             pop=pop,
-            description=desc)
+            description=desc,
+            notes=notes)
 
     def serialize(self) -> tuple:
         """Serialize an instance of the class as a string"""
-        return (self.ID, self.name, self.coordinates, self.tl, self.biosphere, 
-            self.atmosphere, self.temperature, self.population, self.description)
-
+        return (self.ID, self.name, self.coordinates, self.tl, self.biosphere,
+                self.atmosphere, self.temperature, self.population, self.description, self.notes)

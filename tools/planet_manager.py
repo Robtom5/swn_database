@@ -4,59 +4,12 @@ import math
 from swn_database.data import Planet, Coordinate, Connection
 from swn_database import SQLDatabaseLink
 from swn_database.converters import PlanetConverter, ConnectionConverter
-
+from planetary_information import *
 
 class Converters():
     def __init__(self, link):
         self.planet = PlanetConverter(link)
         self.connection = ConnectionConverter(link)
-
-
-ATMOSPHERES = dict(
-    [(2, "Corrosive"),
-     (3, "Inert, useless for respiration."),
-     (4, "Airless/Thin")] +
-    [(n, "Breathable") for n in range(5, 10)] +
-    [(10, "Thick, requires a pressure mask."),
-     (11, "Invasive"),
-     (12, "Corrosive & Invasive")])
-
-TEMPERATURES = dict(
-    [(2, "Frozen, surface locked in perpetual ice. Atmosphere frozen into solid oxygen and lakes of liquid helium."),
-     (3, "Cold, surface dominated by glaciers and tundra.")] +
-    [(n, "Variable Cold") for n in range(4, 6)] +
-    [(n, "Temperate") for n in range(6, 9)] +
-    [(n, "Variable Warm") for n in range(9, 11)] +
-    [(11, "Warm, surface predominantly tropical/desert with hotter areas."),
-     (12, "Burning, surface inhospitable to human life with vacc suit or equivalent.")])
-
-BIOSPHERES = dict(
-    [(2, "Remnant, only the wreckage of a ruined biosphere remains."),
-     (3, "Microbial, litte more that microbial life and the occasional slime mold exists.")] +
-    [(n, "No native biosphere present.") for n in range(3, 6)] +
-    [(n, "Human-Miscible") for n in range(6, 9)] +
-    [(n, "Immiscible") for n in range(9, 11)] +
-    [(11, "Hybrid"),
-     (12, "Engineered")])
-
-POPULATIONS = dict(
-    [(2, "Failed Colony"),
-     (3, "Outpost, few hundred to few thousand inhabitants")] +
-    [(n, "Fewer than a million inhabitants") for n in range(4, 6)] +
-    [(n, "Several million inhabitants") for n in range(6, 9)] +
-    [(n, "Hundreds of millions of inhabitants") for n in range(9, 11)] +
-    [(11, "Billions of inhabitants"),
-     (12, "Alien inhabitants")])
-
-TECHLEVEL = dict(
-    [(2, "0, Neolithic-level technology"),
-     (3, "1, Medieval technology")] +
-    [(n, "2, Early Industrial Age technology") for n in range(4, 6)] +
-    [(n, "4, Modern postech") for n in range(6, 9)] +
-    [(n, "3, Early 21st century equivalent technology") for n in range(9, 11)] +
-    [(11, "4+, Postech with specialities"),
-     (12, "5, Pretech with surviving infrastructure")])
-
 
 class PlanetManagerPrompt(cmd.Cmd):
     intro = "Welcome to the planet manager"
@@ -78,21 +31,7 @@ class PlanetManagerPrompt(cmd.Cmd):
         self.link.execute_query(self.converters.planet.create_table_query)
         self.link.execute_query(self.converters.connection.create_table_query)
 
-    def do_reset(self, inp):
-        '''Reset the database back to it's factory settings'''
-        confirm = input('Are you sure? This will wipe the database. Y/N: ')
-        if (confirm.lower().strip() == 'y'):
-            print("Wiping existing tables")
-            self.link.execute_query(f"DROP TABLE {self.converters.planet.table_name}", suppress=True)
-            self.link.execute_query(f"DROP TABLE {self.converters.connection.table_name}", suppress=True)
-            print("Creating new tables")
-            self.link.execute_query(self.converters.planet.create_table_query)
-            self.link.execute_query(
-                self.converters.connection.create_table_query)
-        else:
-            print("Reset aborted")
-
-    def do_exit(self, inp):
+    def do_quit(self, inp):
         '''Exit the tool'''
         print("Closing database connection")
         self.link.close()
@@ -130,6 +69,14 @@ class PlanetManagerPrompt(cmd.Cmd):
         except Exception as e:
             print("Error updating planet: ", e)
 
+    def complete_update(self, text, line, begindx, endindx):
+        if begindx < 8:
+            planets = [p[0]
+                       for p in self.converters.planet.available_planets()]
+            return [p for p in planets if p.startswith(text.strip())]
+        else:
+            return []
+
     def do_description(self, inp):
         ''' Set the description for the planet'''
         args = inp.split(' ')
@@ -137,6 +84,22 @@ class PlanetManagerPrompt(cmd.Cmd):
         description = ' '.join(args[1:])
         self.converters.planet.update(name=name, desc=description)
         self.link.commit()
+
+    def complete_description(self, text, line, begindx, endindx):
+        if len(line.split(' ')) <= 2:
+            return self.complete_info(text, line, begindx, endindx)
+        else:
+            return []
+
+    def do_notes(self, inp):
+        ''' Set the description for the planet'''
+        args = inp.split(' ')
+        name = args[0]
+        notes = ' '.join(args[1:])
+        self.converters.planet.update(name=name, notes=notes)
+        self.link.commit()
+
+    complete_notes = complete_description
 
     def do_connect(self, inp):
         '''
@@ -170,8 +133,15 @@ class PlanetManagerPrompt(cmd.Cmd):
         print(planet.description.replace('\\n', '\n')
               if planet.description is not None else "")
         print(divider)
+        print(planet.notes.replace('\\n', '\n')
+              if planet.notes is not None else "")
+        print(divider)
         self.connected(planet)
         print(divider)
+
+    def complete_info(self, text, line, begindx, endindx):
+        planets = [p[0] for p in self.converters.planet.available_planets()]
+        return [p for p in planets if self.matches(p, text)]
 
     def connected(self, planet):
         if planet:
@@ -193,7 +163,9 @@ class PlanetManagerPrompt(cmd.Cmd):
                 coordinate = Coordinate.from_hex(coord)
                 steps_to_column = abs(coordinate.x - planet.coordinates.x)
                 steps_to_row = abs(coordinate.y - planet.coordinates.y)
-                if (coordinate.y - planet.coordinates.y < 0) ^ (coordinate.x % 2 == 0):
+                even_column = (coordinate.x % 2 == 0)
+                moving_up = (coordinate.y - planet.coordinates.y < 0)
+                if moving_up ^ even_column:
                     saved_steps_from_columns = math.floor(
                         (steps_to_column + 1) / 2)
                 else:
@@ -211,11 +183,14 @@ class PlanetManagerPrompt(cmd.Cmd):
         '''
         if self.link.planet.check_exists(name):
             planet = self.link.planet.load_by_name(name)
-            confirm = input(f'{name} found at hex {planet.coordinates}. Are you sure you wish to delete? Y/N ')
+            confirm = input(
+                f'{name} found at hex {planet.coordinates}. Are you sure you wish to delete? Y/N ')
             if (confirm.lower().strip() == 'y'):
                 self.link.planet.delete(planet)
         else:
             print(f"No planet found for provided name: {name}")
+
+    complete_delete = complete_info
 
     def do_list(self, inp):
         '''
@@ -223,13 +198,15 @@ class PlanetManagerPrompt(cmd.Cmd):
         Prints the available planets, connections
         '''
         if (inp == 'planets'):
-            [print(f"{f'{p.coordinates}':<3} - " + p.name) for p in self.converters.planet.load_all('name')]
+            [print(f"{f'{p.coordinates}':<3} - " + p.name)
+             for p in self.converters.planet.load_all('name')]
         elif (inp == 'conns'):
-            [print(f"{c.start_hex} -> {c.end_hex}") for c in self.converters.connection.load_all()]
+            [print(f"{c.start_hex} -> {c.end_hex}")
+             for c in self.converters.connection.load_all()]
 
     def do_EOF(self, inp):
         '''Exit the tool'''
-        return self.do_exit(inp)
+        return self.do_quit(inp)
 
     def do_query(self, arg):
         ''' Executes the provided SQL query on the database. '''
@@ -242,6 +219,9 @@ class PlanetManagerPrompt(cmd.Cmd):
             args[arg] = val
 
         return args
+
+    def matches(self, first_string, second_string):
+        return first_string.lower().startswith(second_string.lower().strip())
 
 
 if __name__ == "__main__":

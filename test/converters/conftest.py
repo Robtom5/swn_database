@@ -1,13 +1,17 @@
 import pytest
 
+
 @pytest.fixture
 def sql_connection():
-    return MockSQLConn()    
+    return MockSQLConn()
+
 
 class MockSQLConn():
     def __init__(self):
         self.results = None
         self._queries = []
+        self.rolledback = False
+        self.committed = False
 
     @property
     def database_path(self):
@@ -16,7 +20,7 @@ class MockSQLConn():
     def set_execute_read_results(self, results):
         self.results = results
 
-    def execute_read_query(self, query):
+    def execute_read_query(self, query, suppress=False):
         self._queries.append(query)
         return self.results.pop(0)
 
@@ -25,6 +29,13 @@ class MockSQLConn():
 
     def get_queries(self):
         return self._queries
+
+    def commit(self):
+        self.committed = True
+
+    def rollback(self):
+        self.rolledback = True
+
 
 def trialMethod():
     pass

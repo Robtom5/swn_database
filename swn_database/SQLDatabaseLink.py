@@ -26,7 +26,7 @@ class SQLDatabaseLink(object):
 
     def execute_query(self, query, verbose=False, suppress=False):
         if self.conn is None:
-            raise Error("Must connect to database first")
+            raise Exception("Must connect to database first")
         cursor = self.conn.cursor()
         try:
             cursor.executescript(query)
@@ -39,7 +39,7 @@ class SQLDatabaseLink(object):
 
     def execute_read_query(self, query, suppress=False):
         if self.conn is None:
-            raise Error("Must connect to database first")
+            raise Exception("Must connect to database first")
         cursor = self.conn.cursor()
         result = None
         try:
@@ -53,3 +53,6 @@ class SQLDatabaseLink(object):
 
     def commit(self):
         self.conn.commit()
+
+    def rollback(self):
+        self.conn.rollback()
