@@ -103,7 +103,7 @@ class CharacterEditor(cmd.Cmd):
 
     def do_knows(self, inp):
         '''
-        usage: knows name surname opinion
+        usage: knows name surname opinion [-f]
         '''
         args = inp.split(' ')
         if len(args) < 3:
@@ -120,7 +120,7 @@ class CharacterEditor(cmd.Cmd):
                     self.selected_char,
                     target,
                     opinion)
-                if not target.isPC:
+                if not target.isPC or len(args) <= 4:
                     self.op_converter.modify_opinion(
                         target,
                         self.selected_char,
