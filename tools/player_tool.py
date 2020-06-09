@@ -36,7 +36,7 @@ class Phonebook(cmd.Cmd):
             WHERE o.character_id={self.character.ID}
         ORDER BY name, surname ASC
         """
-        [print(f"{n} {s}") for n,s in self.sql_link.execute_read_query(query)]
+        [print(f"{n} {s}") for n, s in self.sql_link.execute_read_query(query)]
 
     def do_lookup(self, inp):
         '''lookup an individual by name'''
@@ -46,33 +46,36 @@ class Phonebook(cmd.Cmd):
         else:
             character = self.char_converter.load_by_name(name=args[0],
                                                          surname=args[1])
-            homeworld = self.plan_converter.get_planet_name(
-                character.homeworld)
-            current_world = self.plan_converter.get_planet_name(
-                character.current_planet)
-            if self.sql_link.execute_read_query(f"""SELECT opinion
-                FROM opinions
-                WHERE character_id={self.character.ID}
-                AND target_id={character.ID}"""):
-                known_to_player = True
+            if character:
+                homeworld = self.plan_converter.get_planet_name(
+                    character.homeworld)
+                current_world = self.plan_converter.get_planet_name(
+                    character.current_planet)
+                if self.sql_link.execute_read_query(f"""SELECT opinion
+                    FROM opinions
+                    WHERE character_id={self.character.ID}
+                    AND target_id={character.ID}"""):
+                    known_to_player = True
+                else:
+                    known_to_player = False
+                divider = "-" * 10
+                print(divider)
+                print(
+                    f"{character.name} {character.surname}")
+                print(divider)
+                print(f"Age: {character.age}")
+                print(f"Job: {character.role}")
+                print(f"Homeworld: {homeworld}")
+                if known_to_player:
+                    print(f"Current Location: {current_world}")
+                    if character.description:
+                        print(divider)
+                        print(character.description
+                              .replace('\\n', '\n')
+                              .replace('\\t', '\t'))
+                print(divider)
             else:
-                known_to_player = False
-            divider = "-" * 10
-            print(divider)
-            print(
-                f"{character.name} {character.surname}{' *' if character.isPC else ''}")
-            print(divider)
-            print(f"Age: {character.age}")
-            print(f"Job: {character.role}")
-            print(f"Homeworld: {homeworld}")
-            if known_to_player:
-                print(f"Current Location: {current_world}")
-                if character.description:
-                    print(divider)
-                    print(character.description
-                          .replace('\\n', '\n')
-                          .replace('\\t', '\t'))
-            print(divider)
+                print(f"Could not find: {inp}")
 
     def complete_lookup(self, text, line, begidx, endidx):
         available_characters = self.char_converter.available_names()
@@ -85,12 +88,6 @@ class Phonebook(cmd.Cmd):
                                  if a.startswith(line.split(' ')[1])]
 
             return [i for i in matching_surnames if self.matches(i, text)]
-
-    def known_ids(self):
-        query = f"""
-            SELECT
-        """
-        self.sql_link.execute_read_query(query)
 
     def do_quit(self, inp):
         '''Exit current menu option'''
@@ -113,21 +110,24 @@ class PlanetLog(cmd.Cmd):
     def do_info(self, inp):
         '''Gets information for a planet'''
         planet = self.planet_converter.load_by_name(inp)
-        divider = "-" * 10
-        print(divider)
-        print(f"{planet.coordinates}" + " - " + planet.name)
-        print(divider)
-        print("Atmosphere: " + PI.ATMOSPHERES.get(planet.atmosphere, "UNKNOWN"))
-        print("Temperature: " + PI.TEMPERATURES.get(planet.temperature, "UNKNOWN"))
-        print("Biosphere: " + PI.BIOSPHERES.get(planet.biosphere, "UNKNOWN"))
-        print("Population: " + PI.POPULATIONS.get(planet.population, "UNKNOWN"))
-        print("Tech Level: " + PI.TECHLEVEL.get(planet.tl, "UNKNOWN"))
-        print(divider)
-        print(planet.description.replace('\\n', '\n')
-              if planet.description is not None else "")
-        print(divider)
-        self.connected(planet)
-        print(divider)
+        if planet:
+            divider = "-" * 10
+            print(divider)
+            print(f"{planet.coordinates}" + " - " + planet.name)
+            print(divider)
+            print("Atmosphere: " + PI.ATMOSPHERES.get(planet.atmosphere, "UNKNOWN"))
+            print("Temperature: " + PI.TEMPERATURES.get(planet.temperature, "UNKNOWN"))
+            print("Biosphere: " + PI.BIOSPHERES.get(planet.biosphere, "UNKNOWN"))
+            print("Population: " + PI.POPULATIONS.get(planet.population, "UNKNOWN"))
+            print("Tech Level: " + PI.TECHLEVEL.get(planet.tl, "UNKNOWN"))
+            print(divider)
+            print(planet.description.replace('\\n', '\n')
+                  if planet.description is not None else "")
+            print(divider)
+            self.connected(planet)
+            print(divider)
+        else:
+            print(f"Could not find: {inp}")
 
     def complete_info(self, text, line, begindx, endindx):
         planets = [p[0] for p in self.planet_converter.available_planets()]
